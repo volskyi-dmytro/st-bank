@@ -10,6 +10,7 @@ import (
 	"github.com/volskyi-dmytro/st-bank/util"
 )
 
+// createRandomEntry creates a random entry for a specific account for testing
 func createRandomEntry(t *testing.T, account Account) Entry {
 	arg := CreateEntryParams{
 		AccountID: account.ID,
@@ -30,11 +31,13 @@ func createRandomEntry(t *testing.T, account Account) Entry {
 	return entry
 }
 
+// TestCreateEntry tests the CreateEntry function
 func TestCreateEntry(t *testing.T) {
 	account := createRandomAccount(t)
 	createRandomEntry(t, account)
 }
 
+// TestGetEntry tests the GetEntry function
 func TestGetEntry(t *testing.T) {
 	account := createRandomAccount(t)
 	entry1 := createRandomEntry(t, account)
@@ -50,6 +53,7 @@ func TestGetEntry(t *testing.T) {
 	require.WithinDuration(t, entry1.CreatedAt, entry2.CreatedAt, time.Second)
 }
 
+// TestUpdateEntry tests the UpdateEntry function
 func TestUpdateEntry(t *testing.T) {
 	account := createRandomAccount(t)
 	entry1 := createRandomEntry(t, account)
@@ -70,6 +74,7 @@ func TestUpdateEntry(t *testing.T) {
 	require.WithinDuration(t, entry1.CreatedAt, entry2.CreatedAt, time.Second)
 }
 
+// TestDeleteEntry tests the DeleteEntry function
 func TestDeleteEntry(t *testing.T) {
 	account := createRandomAccount(t)
 	entry1 := createRandomEntry(t, account)
@@ -82,6 +87,7 @@ func TestDeleteEntry(t *testing.T) {
 	require.Empty(t, entry2)
 }
 
+// TestListEntries tests the ListEntries function
 func TestListEntries(t *testing.T) {
 	account := createRandomAccount(t)
 

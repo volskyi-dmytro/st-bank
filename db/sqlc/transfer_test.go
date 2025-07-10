@@ -10,6 +10,7 @@ import (
 	"github.com/volskyi-dmytro/st-bank/util"
 )
 
+// createRandomTransfer creates a random transfer for testing
 func createRandomTransfer(t *testing.T) Transfer {
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
@@ -35,10 +36,12 @@ func createRandomTransfer(t *testing.T) Transfer {
 	return transfer
 }
 
+// TestCreateTransfer tests the CreateTransfer function
 func TestCreateTransfer(t *testing.T) {
 	createRandomTransfer(t)
 }
 
+// TestGetTransfer tests the GetTransfer function
 func TestGetTransfer(t *testing.T) {
 	transfer1 := createRandomTransfer(t)
 	transfer2, err := testQueries.GetTransfer(context.Background(), transfer1.ID)
@@ -54,6 +57,7 @@ func TestGetTransfer(t *testing.T) {
 	require.WithinDuration(t, transfer1.CreatedAt, transfer2.CreatedAt, time.Second)
 }
 
+// TestUpdateTransfer tests the UpdateTransfer function
 func TestUpdateTransfer(t *testing.T) {
 	transfer1 := createRandomTransfer(t)
 
@@ -74,6 +78,7 @@ func TestUpdateTransfer(t *testing.T) {
 	require.WithinDuration(t, transfer1.CreatedAt, transfer2.CreatedAt, time.Second)
 }
 
+// TestDeleteTransfer tests the DeleteTransfer function
 func TestDeleteTransfer(t *testing.T) {
 	transfer1 := createRandomTransfer(t)
 	err := testQueries.DeleteTransfer(context.Background(), transfer1.ID)
@@ -85,6 +90,7 @@ func TestDeleteTransfer(t *testing.T) {
 	require.Empty(t, transfer2)
 }
 
+// TestListTransfers tests the ListTransfers function
 func TestListTransfers(t *testing.T) {
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
@@ -111,6 +117,7 @@ func TestListTransfers(t *testing.T) {
 	}
 }
 
+// createTransferBetweenAccounts creates a transfer between two specific accounts for testing
 func createTransferBetweenAccounts(t *testing.T, fromAccountID, toAccountID int64) Transfer {
 	arg := CreateTransferParams{
 		FromAccountID: fromAccountID,
