@@ -13,6 +13,8 @@ type Store interface {
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error)
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
 	DeleteAccount(ctx context.Context, id int64) error
+	GetTransfer(ctx context.Context, id int64) (Transfer, error)
+	GetEntry(ctx context.Context, id int64) (Entry, error)
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }
 
