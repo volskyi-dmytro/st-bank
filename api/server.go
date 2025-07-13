@@ -11,6 +11,9 @@ type Server struct {
 }
 
 func NewServer(store db.Store) *Server {
+	// Register custom validators
+	RegisterValidators()
+	
 	server := &Server{store: store}
 	router := gin.Default()
 
@@ -19,6 +22,8 @@ func NewServer(store db.Store) *Server {
 	router.GET("/accounts", server.listAccounts)
 	router.PUT("/accounts/:id", server.updateAccount)
 	router.DELETE("/accounts/:id", server.deleteAccount)
+	
+	router.POST("/transfers", server.createTransfer)
 
 	server.router = router
 	return server
