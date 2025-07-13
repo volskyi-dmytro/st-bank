@@ -11,7 +11,10 @@ import (
 
 // createRandomUser creates a random user for testing
 func createRandomUser(t *testing.T) User {
-	hashedPassword := util.RandomString(10) // In real code, this would be properly hashed
+	password := util.RandomString(6)
+	hashedPassword, err := util.HashPassword(password)
+	require.NoError(t, err)
+
 	arg := CreateUserParams{
 		Username:       util.RandomOwner(),
 		HashedPassword: hashedPassword,
@@ -52,4 +55,30 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user1.Email, user2.Email)
 	require.WithinDuration(t, user1.PasswordChangedAt, user2.PasswordChangedAt, time.Second)
 	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
+}
+
+func TestCreateUserWithHashedPassword(t *testing.T) {
+	password := util.RandomString(6)
+	hashedPassword, err := util.HashPassword(password)
+	require.NoError(t, err)
+
+	arg := CreateUserParams{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+	}
+
+	user, err := testQueries.CreateUser(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, user)
+
+	// Verify the password can be checked correctly
+	err = util.CheckPassword(password, user.HashedPassword)
+	require.NoError(t, err)
+
+	// Verify wrong password fails
+	wrongPassword := util.RandomString(6)
+	err = util.CheckPassword(wrongPassword, user.HashedPassword)
+	require.Error(t, err)
 }
