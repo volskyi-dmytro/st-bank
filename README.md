@@ -44,7 +44,9 @@ st-bank/
 │   └── mock/           # Mock database for testing
 ├── token/              # Token authentication
 │   ├── jwt_maker.go   # JWT token implementation
+│   ├── jwt_maker_test.go # JWT comprehensive tests
 │   ├── paseto_maker.go # PASETO token implementation
+│   ├── paseto_maker_test.go # PASETO comprehensive tests
 │   ├── payload.go     # Token payload structure
 │   └── maker.go       # Token interface
 ├── util/               # Utility functions
@@ -300,6 +302,42 @@ go test -v -cover ./...
 
 # Run specific test
 go test -v ./api -run TestTransferAPI
+
+# Run token authentication tests
+go test -v ./token -run TestJWT
+go test -v ./token -run TestPaseto
+```
+
+### Token Authentication Testing
+
+The project includes comprehensive test coverage for both JWT and PASETO token implementations:
+
+#### JWT Tests (`jwt_maker_test.go`)
+- ✅ **Core Functionality**: Token creation, verification, and payload validation
+- ✅ **Security Tests**: Algorithm confusion prevention, signature validation
+- ✅ **Error Handling**: Expired tokens, malformed tokens, invalid keys
+- ✅ **Edge Cases**: Empty usernames, zero/long durations, key size validation
+- ✅ **Attack Prevention**: None algorithm bypass, cross-key verification failure
+
+#### PASETO Tests (`paseto_maker_test.go`)
+- ✅ **Core Functionality**: Encryption, decryption, and format validation
+- ✅ **Security Tests**: Key isolation, token uniqueness, ChaCha20-Poly1305 validation
+- ✅ **Error Handling**: Expired tokens, malformed tokens, wrong key sizes
+- ✅ **Edge Cases**: Various key sizes, token format validation
+- ✅ **Stress Testing**: 1000+ token creation/verification cycles
+- ✅ **Advanced Security**: Nonce randomness, multi-key isolation
+
+Both test suites ensure resistance against common token-based attacks and validate proper implementation of each token standard's security features.
+
+```bash
+# Run all token tests
+go test -v ./token
+
+# Test JWT implementation only
+go test -v ./token -run TestJWT
+
+# Test PASETO implementation only  
+go test -v ./token -run TestPaseto
 ```
 
 ## Security Features
