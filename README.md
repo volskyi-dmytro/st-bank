@@ -17,7 +17,7 @@ A RESTful HTTP API for a simple banking system built with Go, featuring user man
 
 ## Tech Stack
 
-- **Backend**: Go 1.24.4
+- **Backend**: Go 1.24.5
 - **Web Framework**: Gin
 - **Database**: PostgreSQL 12
 - **ORM**: SQLC (type-safe SQL code generation)
@@ -26,7 +26,7 @@ A RESTful HTTP API for a simple banking system built with Go, featuring user man
 - **Password Hashing**: bcrypt
 - **Testing**: Testify + GoMock
 - **Configuration**: Viper
-- **Containerization**: Docker
+- **Containerization**: Docker & Docker Compose
 
 ## Project Structure
 
@@ -56,6 +56,10 @@ st-bank/
 │   ├── password.go    # Password hashing utilities
 │   └── random.go      # Test data generation
 ├── main.go            # Application entry point
+├── Dockerfile        # Docker container configuration
+├── docker-compose.yaml # Multi-container orchestration
+├── start.sh          # Container startup script
+├── wait-for.sh       # Database readiness checker
 ├── Makefile          # Build and development tasks
 └── app.env           # Environment configuration
 ```
@@ -114,12 +118,39 @@ st-bank/
 
 ### Prerequisites
 
-- Go 1.24.4+
-- PostgreSQL 12+
-- Docker (optional)
-- golang-migrate CLI tool
+- Go 1.24.5+
+- PostgreSQL 12+ (or Docker)
+- Docker & Docker Compose (recommended)
+- golang-migrate CLI tool (if not using Docker)
 
 ### Installation
+
+#### Option 1: Docker Compose (Recommended) 🐳
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/volskyi-dmytro/st-bank.git
+   cd st-bank
+   ```
+
+2. **Start with Docker Compose**
+   ```bash
+   docker compose up --build
+   ```
+
+   This will:
+   - Build the application image
+   - Start PostgreSQL database
+   - Wait for database to be ready
+   - Run database migrations automatically
+   - Start the API server on port 8080
+
+3. **Stop the services**
+   ```bash
+   docker compose down
+   ```
+
+#### Option 2: Local Development
 
 1. **Clone the repository**
    ```bash
@@ -164,6 +195,25 @@ st-bank/
 
 ### Running the Application
 
+#### With Docker Compose
+```bash
+# Start all services
+docker compose up
+
+# Start in background
+docker compose up -d
+
+# Rebuild and start
+docker compose up --build
+
+# View logs
+docker compose logs -f api
+
+# Stop services
+docker compose down
+```
+
+#### Local Development
 1. **Start the server**
    ```bash
    make server
@@ -262,6 +312,13 @@ ACCESS_TOKEN_DURATION=15m
 TOKEN_TYPE=paseto
 ```
 
+### Docker Environment
+
+When using Docker Compose, environment variables are automatically configured:
+- Database host changes from `localhost` to `postgresdb` (container service name)
+- All required environment variables are set in `docker-compose.yaml`
+- Database data persists in Docker volume `postgres_data`
+
 ### Token Configuration
 
 - `TOKEN_SYMMETRIC_KEY`: 32-character symmetric key for token signing/encryption
@@ -277,8 +334,19 @@ Switch between token types by changing `TOKEN_TYPE` in `app.env`.
 
 ## Development
 
-### Available Make Commands
+### Available Commands
 
+#### Docker Commands
+```bash
+docker compose up --build    # Build and start all services
+docker compose up -d         # Start services in background
+docker compose down          # Stop and remove containers
+docker compose logs -f api   # Follow API logs
+docker compose exec api sh   # Access API container shell
+docker compose exec postgresdb psql -U root -d st_bank  # Access database
+```
+
+#### Make Commands (Local Development)
 ```bash
 make postgres        # Start PostgreSQL container
 make createdb        # Create database
@@ -381,6 +449,25 @@ make migrateup
 make migratedown
 ```
 
+## Docker Details
+
+### Multi-stage Dockerfile
+- **Build Stage**: Compiles Go application and downloads migration tool
+- **Runtime Stage**: Minimal Alpine Linux image with only required dependencies
+- **Size**: Final image ~56MB
+- **Security**: Non-root user, minimal attack surface
+
+### Container Features
+- 🔄 **Automatic Migrations**: Database schema applied on startup
+- ⏳ **Health Checks**: Wait for database readiness before starting API
+- 📁 **Volume Persistence**: Database data survives container restarts
+- 🔧 **Environment Flexibility**: Easy configuration via environment variables
+
+### Services
+- **API**: Go application on port 8080
+- **PostgreSQL**: Database on port 5432 with persistent volume
+- **Automatic Migration**: Runs on container startup
+
 ## Contributing
 
 1. Fork the repository
@@ -388,6 +475,24 @@ make migratedown
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Development Workflow
+```bash
+# Start development environment
+docker compose up -d
+
+# Make changes to code
+# ...
+
+# Rebuild and restart API only
+docker compose up --build api
+
+# Run tests
+make test
+
+# Clean up
+docker compose down
+```
 
 ## Testing in CI/CD
 
