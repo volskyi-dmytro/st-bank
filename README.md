@@ -5,7 +5,8 @@ A RESTful HTTP API for a simple banking system built with Go, featuring user man
 ## Features
 
 - 🔐 **User Management** - Create users with secure bcrypt password hashing
-- 🔑 **Authentication** - JWT and PASETO token-based authentication
+- 🔑 **Authentication** - JWT and PASETO token-based authentication with middleware
+- 🛡️ **Authorization** - Role-based access control and ownership validation
 - 💰 **Account Management** - Create, read, update, and delete bank accounts
 - 💸 **Money Transfers** - Secure transfers between accounts with transaction support
 - 🔒 **Database Transactions** - ACID compliance with deadlock prevention
@@ -35,6 +36,7 @@ st-bank/
 │   ├── account.go         # Account CRUD operations
 │   ├── transfer.go        # Money transfer operations  
 │   ├── user.go           # User management & authentication
+│   ├── middleware.go      # Authentication middleware
 │   ├── validator.go      # Custom validation logic
 │   └── *_test.go         # API tests
 ├── db/
@@ -91,19 +93,22 @@ st-bank/
 
 ## API Endpoints
 
-### Authentication
+### Authentication (Public)
 - `POST /users` - Create a new user
 - `POST /users/login` - Login user and get access token
 
-### Accounts
-- `POST /accounts` - Create a new account
-- `GET /accounts/:id` - Get account by ID
-- `GET /accounts` - List accounts (paginated)
-- `PUT /accounts/:id` - Update account balance
-- `DELETE /accounts/:id` - Delete account
+### Accounts (Protected) 🔒
+- `POST /accounts` - Create a new account (requires authentication)
+- `GET /accounts/:id` - Get account by ID (requires authentication + ownership)
+- `GET /accounts` - List accounts (requires authentication, filtered by owner)
+- `PUT /accounts/:id` - Update account balance (requires authentication + ownership)
+- `DELETE /accounts/:id` - Delete account (requires authentication + ownership)
 
-### Transfers
-- `POST /transfers` - Transfer money between accounts
+### Transfers (Protected) 🔒
+- `POST /transfers` - Transfer money between accounts (requires authentication + ownership of source account)
+
+**Authentication Required**: All protected endpoints require a valid Bearer token in the Authorization header.
+**Authorization**: Users can only access and modify their own accounts and transfers.
 
 ## Getting Started
 
@@ -218,6 +223,7 @@ Response:
 ```bash
 curl -X POST http://localhost:8080/accounts \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{
     "owner": "alice",
     "currency": "USD"
@@ -228,6 +234,7 @@ curl -X POST http://localhost:8080/accounts \
 ```bash
 curl -X POST http://localhost:8080/transfers \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{
     "from_account_id": 1,
     "to_account_id": 2,
@@ -238,7 +245,8 @@ curl -X POST http://localhost:8080/transfers \
 
 ### Get Account
 ```bash
-curl http://localhost:8080/accounts/1
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://localhost:8080/accounts/1
 ```
 
 ## Configuration
@@ -290,6 +298,8 @@ The project includes comprehensive tests:
 
 - **Unit Tests**: Test individual functions and methods
 - **Integration Tests**: Test API endpoints with mock database
+- **Authentication Tests**: Test middleware and token validation
+- **Authorization Tests**: Test ownership-based access control
 - **Database Tests**: Test SQL queries against real database
 - **Coverage**: 96%+ test coverage
 
@@ -302,6 +312,10 @@ go test -v -cover ./...
 
 # Run specific test
 go test -v ./api -run TestTransferAPI
+
+# Run authentication tests
+go test -v ./api -run TestGetAccountAPI
+go test -v ./api -run TestCreateAccountAPI
 
 # Run token authentication tests
 go test -v ./token -run TestJWT
@@ -344,6 +358,9 @@ go test -v ./token -run TestPaseto
 
 - ✅ **Password Hashing**: bcrypt with salt
 - ✅ **Token Authentication**: JWT and PASETO support with configurable expiration
+- ✅ **Authentication Middleware**: Automatic token validation for protected routes
+- ✅ **Authorization**: Ownership-based access control for all account operations
+- ✅ **Route Protection**: Public and protected endpoint separation
 - ✅ **Input Validation**: Comprehensive request validation
 - ✅ **SQL Injection Prevention**: Parameterized queries via SQLC
 - ✅ **Transaction Safety**: ACID compliance with deadlock prevention

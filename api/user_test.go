@@ -104,20 +104,6 @@ func TestLoginUserAPI(t *testing.T) {
 	}
 }
 
-func randomUser(t *testing.T) (user db.User, password string) {
-	password = util.RandomString(6)
-	hashedPassword, err := util.HashPassword(password)
-	require.NoError(t, err)
-
-	user = db.User{
-		Username:       util.RandomOwner(),
-		HashedPassword: hashedPassword,
-		FullName:       util.RandomOwner(),
-		Email:          util.RandomEmail(),
-	}
-	return
-}
-
 func newTestServer(t *testing.T, store db.Store) *Server {
 	config := util.Config{
 		TokenSymmetricKey:   util.RandomString(32),
