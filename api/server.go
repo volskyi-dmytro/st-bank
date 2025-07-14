@@ -1,23 +1,50 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	db "github.com/volskyi-dmytro/st-bank/db/sqlc"
+	"github.com/volskyi-dmytro/st-bank/token"
+	"github.com/volskyi-dmytro/st-bank/util"
 )
 
 type Server struct {
-	store db.Store
-	router *gin.Engine
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	var tokenMaker token.Maker
+	var err error
+	
+	switch config.TokenType {
+	case "jwt":
+		tokenMaker, err = token.NewJWTMaker(config.TokenSymmetricKey)
+	case "paseto":
+		tokenMaker, err = token.NewPasetoMaker(config.TokenSymmetricKey)
+	default:
+		tokenMaker, err = token.NewPasetoMaker(config.TokenSymmetricKey)
+	}
+	
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+
+	server := &Server{
+		config:     config,
+		store:      store,
+		tokenMaker: tokenMaker,
+	}
+	
 	// Register custom validators
 	RegisterValidators()
 	
-	server := &Server{store: store}
 	router := gin.Default()
 
 	router.POST("/users", server.createUser)
+	router.POST("/users/login", server.loginUser)
 	
 	router.POST("/accounts", server.createAccount)
 	router.GET("/accounts/:id", server.getAccount)
@@ -28,7 +55,7 @@ func NewServer(store db.Store) *Server {
 	router.POST("/transfers", server.createTransfer)
 
 	server.router = router
-	return server
+	return server, nil
 }
 
 func (server *Server) Start(address string) error {

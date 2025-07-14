@@ -5,6 +5,7 @@ A RESTful HTTP API for a simple banking system built with Go, featuring user man
 ## Features
 
 - 🔐 **User Management** - Create users with secure bcrypt password hashing
+- 🔑 **Authentication** - JWT and PASETO token-based authentication
 - 💰 **Account Management** - Create, read, update, and delete bank accounts
 - 💸 **Money Transfers** - Secure transfers between accounts with transaction support
 - 🔒 **Database Transactions** - ACID compliance with deadlock prevention
@@ -20,6 +21,7 @@ A RESTful HTTP API for a simple banking system built with Go, featuring user man
 - **Database**: PostgreSQL 12
 - **ORM**: SQLC (type-safe SQL code generation)
 - **Migrations**: golang-migrate
+- **Authentication**: JWT & PASETO tokens
 - **Password Hashing**: bcrypt
 - **Testing**: Testify + GoMock
 - **Configuration**: Viper
@@ -32,7 +34,7 @@ st-bank/
 ├── api/                    # HTTP API handlers and routes
 │   ├── account.go         # Account CRUD operations
 │   ├── transfer.go        # Money transfer operations  
-│   ├── user.go           # User management
+│   ├── user.go           # User management & authentication
 │   ├── validator.go      # Custom validation logic
 │   └── *_test.go         # API tests
 ├── db/
@@ -40,6 +42,11 @@ st-bank/
 │   ├── query/           # SQL queries
 │   ├── sqlc/           # Generated type-safe Go code
 │   └── mock/           # Mock database for testing
+├── token/              # Token authentication
+│   ├── jwt_maker.go   # JWT token implementation
+│   ├── paseto_maker.go # PASETO token implementation
+│   ├── payload.go     # Token payload structure
+│   └── maker.go       # Token interface
 ├── util/               # Utility functions
 │   ├── config.go      # Configuration management
 │   ├── password.go    # Password hashing utilities
@@ -82,8 +89,9 @@ st-bank/
 
 ## API Endpoints
 
-### Users
+### Authentication
 - `POST /users` - Create a new user
+- `POST /users/login` - Login user and get access token
 
 ### Accounts
 - `POST /accounts` - Create a new account
@@ -180,6 +188,30 @@ curl -X POST http://localhost:8080/users \
   }'
 ```
 
+### Login User
+```bash
+curl -X POST http://localhost:8080/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "alice",
+    "password": "secret123"
+  }'
+```
+
+Response:
+```json
+{
+  "access_token": "v2.local.Gdh5kiOTyyaQ3_bNykYDeYHO21Jg2...",
+  "user": {
+    "username": "alice",
+    "full_name": "Alice Johnson",
+    "email": "alice@example.com",
+    "password_changed_at": "2023-01-01T00:00:00Z",
+    "created_at": "2023-01-01T00:00:00Z"
+  }
+}
+```
+
 ### Create an Account
 ```bash
 curl -X POST http://localhost:8080/accounts \
@@ -215,7 +247,23 @@ The application uses environment variables for configuration. See `app.env`:
 DB_DRIVER=postgres
 DB_SOURCE=postgresql://root:password@localhost:5432/st_bank?sslmode=disable
 SERVER_ADDRESS=0.0.0.0:8080
+TOKEN_SYMMETRIC_KEY=12345678901234567890123456789012
+ACCESS_TOKEN_DURATION=15m
+TOKEN_TYPE=paseto
 ```
+
+### Token Configuration
+
+- `TOKEN_SYMMETRIC_KEY`: 32-character symmetric key for token signing/encryption
+- `ACCESS_TOKEN_DURATION`: Token expiration time (e.g., 15m, 1h, 24h)
+- `TOKEN_TYPE`: Choose between `jwt` or `paseto` (default: paseto)
+
+#### JWT vs PASETO
+
+- **JWT**: JSON Web Tokens - widely adopted, good tooling support
+- **PASETO**: Platform-Agnostic Security Tokens - more secure by design, prevents common JWT vulnerabilities
+
+Switch between token types by changing `TOKEN_TYPE` in `app.env`.
 
 ## Development
 
@@ -257,6 +305,7 @@ go test -v ./api -run TestTransferAPI
 ## Security Features
 
 - ✅ **Password Hashing**: bcrypt with salt
+- ✅ **Token Authentication**: JWT and PASETO support with configurable expiration
 - ✅ **Input Validation**: Comprehensive request validation
 - ✅ **SQL Injection Prevention**: Parameterized queries via SQLC
 - ✅ **Transaction Safety**: ACID compliance with deadlock prevention
