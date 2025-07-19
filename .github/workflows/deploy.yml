@@ -17,7 +17,24 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4 
 
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials for secrets
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Load secrets and store to app.env
+      run: |
+        aws secretsmanager get-secret-value --secret-id stbank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > app.env
+        if [ ! -s app.env ]; then
+          echo "Error: app.env is empty, secrets loading failed"
+          cat app.env
+          exit 1
+        fi
+        echo "✅ Successfully loaded secrets to app.env"
+    
+    - name: Configure AWS credentials for ECR
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -26,10 +43,7 @@ jobs:
     
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Load secrets and store to app.env
-      run:  aws secretsmanager get-secret-value --secret-id stbank --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > app.env 
+      uses: aws-actions/amazon-ecr-login@v2 
 
     - name: Build, tag, and push docker image to Amazon ECR
       env:
