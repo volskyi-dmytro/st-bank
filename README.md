@@ -514,4 +514,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Note**: This is a learning project for demonstrating Go backend development best practices. Not intended for production banking use without additional security measures.
+**Note**: This is a learning project for demonstrating Go backend development best practices. Not intended for production banking use without additional security measures.# Updated secrets configuration
