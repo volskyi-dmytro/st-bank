@@ -494,13 +494,77 @@ make test
 docker compose down
 ```
 
+## Deployment
+
+### AWS Infrastructure
+
+The application is deployed on AWS with the following components:
+
+- **Database**: Amazon RDS PostgreSQL instance in `us-east-1`
+- **Secrets Management**: AWS Secrets Manager for environment variables and database credentials
+- **Container Registry**: Amazon ECR in `eu-central-1` for Docker images
+- **CI/CD**: GitHub Actions automated deployment pipeline
+
+### Deployment Pipeline
+
+The project includes GitHub Actions workflow (`.github/workflows/deploy.yml`) that:
+
+1. **Secrets Loading**: 
+   - Connects to AWS Secrets Manager in `us-east-1` region
+   - Loads database credentials and application configuration
+   - Creates `app.env` file with proper environment variables
+
+2. **Container Build**:
+   - Builds Docker image with loaded secrets
+   - Tags image with Git commit SHA
+   - Pushes to Amazon ECR in `eu-central-1` region
+
+3. **Error Handling**:
+   - Validates that secrets are properly loaded (non-empty app.env)
+   - Fails deployment if secrets loading fails
+   - Provides clear error messages for debugging
+
+### AWS Configuration
+
+**Secrets Manager Configuration:**
+```json
+{
+  "DB_SOURCE": "postgresql://root:PASSWORD@stbank.cw1iu28ck5cv.us-east-1.rds.amazonaws.com:5432/st_bank",
+  "DB_DRIVER": "postgres", 
+  "SERVER_ADDRESS": "0.0.0.0:8080",
+  "ACCESS_TOKEN_DURATION": "15m",
+  "TOKEN_SYMMETRIC_KEY": "your-32-character-key"
+}
+```
+
+**Required AWS Permissions:**
+- `secretsmanager:GetSecretValue` for loading application secrets
+- `ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:GetDownloadUrlForLayer`, `ecr:BatchGetImage` for ECR access
+
+### Running Deployed Image
+
+```bash
+# Login to ECR
+aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 986629373383.dkr.ecr.eu-central-1.amazonaws.com
+
+# Pull and run the latest image
+docker pull 986629373383.dkr.ecr.eu-central-1.amazonaws.com/stbank:COMMIT_SHA
+docker run -p 8080:8080 986629373383.dkr.ecr.eu-central-1.amazonaws.com/stbank:COMMIT_SHA
+```
+
+The deployed application automatically:
+- Loads environment variables from the baked-in app.env file
+- Runs database migrations on startup
+- Connects to the AWS RDS PostgreSQL instance
+- Serves the API on port 8080
+
 ## Testing in CI/CD
 
-The project includes GitHub Actions workflow that:
-- Sets up PostgreSQL service
-- Runs database migrations
-- Executes all tests
-- Validates code coverage
+The project includes comprehensive testing and deployment automation:
+- Automated secrets loading from AWS Secrets Manager
+- Multi-region AWS setup (secrets in us-east-1, ECR in eu-central-1)
+- Docker image building and pushing to ECR
+- Environment variable validation and error handling
 
 ## License
 
@@ -514,4 +578,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Note**: This is a learning project for demonstrating Go backend development best practices. Not intended for production banking use without additional security measures.# Updated secrets configuration
+**Note**: This is a learning project for demonstrating Go backend development best practices. Not intended for production banking use without additional security measures.
