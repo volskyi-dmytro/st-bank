@@ -28,5 +28,5 @@ COPY db/migration ./migration
 RUN chmod +x start.sh wait-for.sh
 
 EXPOSE 8080
-ENTRYPOINT ["/app/wait-for.sh", "postgresdb:5432", "--", "/app/start.sh"]
 CMD ["/app/main"]
+ENTRYPOINT ["/app/start.sh"]
