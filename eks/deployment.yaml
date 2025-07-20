@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stbank-api-deployment
+  labels:
+    app: stbank-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stbank-api
+  template:
+    metadata:
+      labels:
+        app: stbank-api
+    spec:
+      containers:
+      - name: stbank-api
+        image: 986629373383.dkr.ecr.eu-central-1.amazonaws.com/stbank:ccad831b47a07979323102e18401c4e954459cf4
+        ports:
+        - containerPort: 8080

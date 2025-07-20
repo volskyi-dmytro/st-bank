@@ -503,6 +503,7 @@ The application is deployed on AWS with the following components:
 - **Database**: Amazon RDS PostgreSQL instance in `us-east-1`
 - **Secrets Management**: AWS Secrets Manager for environment variables and database credentials
 - **Container Registry**: Amazon ECR in `eu-central-1` for Docker images
+- **Container Orchestration**: Amazon EKS (Elastic Kubernetes Service) for production deployment
 - **CI/CD**: GitHub Actions automated deployment pipeline
 
 ### Deployment Pipeline
@@ -540,6 +541,25 @@ The project includes GitHub Actions workflow (`.github/workflows/deploy.yml`) th
 **Required AWS Permissions:**
 - `secretsmanager:GetSecretValue` for loading application secrets
 - `ecr:GetAuthorizationToken`, `ecr:BatchCheckLayerAvailability`, `ecr:GetDownloadUrlForLayer`, `ecr:BatchGetImage` for ECR access
+
+### Kubernetes Deployment
+
+The application includes Kubernetes manifests in the `eks/` directory for EKS deployment:
+
+- **`deployment.yaml`**: Kubernetes Deployment with 2 replicas for high availability
+- **`service.yaml`**: LoadBalancer service exposing the API on port 80
+- **`aws-auth.yaml`**: ConfigMap for EKS node group and GitHub CI user authentication
+
+```bash
+# Deploy to EKS cluster
+kubectl apply -f eks/aws-auth.yaml
+kubectl apply -f eks/deployment.yaml
+kubectl apply -f eks/service.yaml
+
+# Check deployment status
+kubectl get pods -l app=stbank-api
+kubectl get service stbank-api-service
+```
 
 ### Running Deployed Image
 
