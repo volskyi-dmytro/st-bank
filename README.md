@@ -44,6 +44,10 @@ st-bank/
 │   ├── query/           # SQL queries
 │   ├── sqlc/           # Generated type-safe Go code
 │   └── mock/           # Mock database for testing
+├── eks/                  # Kubernetes deployment manifests
+│   ├── aws-auth.yaml    # EKS authentication ConfigMap
+│   ├── deployment.yaml  # Kubernetes Deployment
+│   └── service.yaml     # LoadBalancer Service
 ├── token/              # Token authentication
 │   ├── jwt_maker.go   # JWT token implementation
 │   ├── jwt_maker_test.go # JWT comprehensive tests
